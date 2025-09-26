@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python proxy.py",
+    "startCommand": "gunicorn proxy:app",
     "restartPolicyType": "ON_FAILURE"
   }
 }
