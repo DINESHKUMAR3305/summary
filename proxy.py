@@ -7,11 +7,10 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Configure logging for production
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize the Gradio client with error handling
+# Initialize the Gradio client
 try:
     client = Client("DINESH03032005/topic-extension")
     logger.info("✅ Gradio client initialized successfully")
@@ -22,10 +21,10 @@ except Exception as e:
 @app.route('/')
 def home():
     return jsonify({
-        "status": "Proxy server is running", 
+        "status": "Proxy server is running on Railway", 
         "message": "Use /predict endpoint",
-        "version": "1.0",
-        "model": "DINESH03032005/topic-extension"
+        "version": "2.0",
+        "platform": "Railway"
     })
 
 @app.route('/predict', methods=['POST'])
@@ -33,7 +32,7 @@ def predict():
     if client is None:
         return jsonify({
             "success": False,
-            "error": "Gradio client not initialized. Please check server logs."
+            "error": "Gradio client not initialized"
         }), 500
         
     try:
@@ -44,7 +43,6 @@ def predict():
         
         text = data['text'].strip()
         
-        # Input validation
         if len(text) == 0:
             return jsonify({"error": "Text cannot be empty"}), 400
             
@@ -52,20 +50,18 @@ def predict():
             return jsonify({"error": "Text too long. Maximum 10000 characters allowed"}), 400
         
         # Call the Gradio Space
-        logger.info(f"Processing text of length: {len(text)}")
         result = client.predict(text, api_name="/predict")
         
-        # Ensure result is properly formatted as string
         if hasattr(result, 'format') and callable(result.format):
             result = str(result)
         
-        logger.info("✅ Successfully processed request")
+        logger.info(f"✅ Processed text length: {len(text)}")
         
         return jsonify({
             "success": True,
             "input_length": len(text),
             "result": result,
-            "message": "Successfully processed"
+            "message": "Successfully processed on Railway"
         })
         
     except Exception as e:
@@ -78,26 +74,14 @@ def predict():
 @app.route('/health')
 def health():
     if client is None:
-        return jsonify({
-            "status": "unhealthy", 
-            "error": "Gradio client not available"
-        }), 500
-        
+        return jsonify({"status": "unhealthy", "error": "Client not available"}), 500
+    
     try:
-        # Test the connection with a simple prediction
         test_result = client.predict("health check", api_name="/predict")
-        return jsonify({
-            "status": "healthy",
-            "model": "connected",
-            "test_result": "ok"
-        })
+        return jsonify({"status": "healthy", "platform": "Railway"})
     except Exception as e:
-        return jsonify({
-            "status": "unhealthy", 
-            "error": str(e)
-        }), 500
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    # Set debug=False for production
     app.run(host='0.0.0.0', port=port, debug=False)
